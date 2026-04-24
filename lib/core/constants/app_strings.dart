@@ -110,6 +110,24 @@ class AppStrings {
   static String get deleteEverything => _isEs ? 'BORRAR TODO' : 'DELETE EVERYTHING';
   static String get absolutelySure => _isEs ? '¿Estás completamente seguro?' : 'Are you absolutely sure?';
   static String get delete => _isEs ? 'Borrar' : 'Delete';
+  static String get privacyPolicy => _isEs ? 'Política de Privacidad' : 'Privacy Policy';
+
+  static String get privacyPolicyContent => _isEs 
+    ? 'En KeepIt, nos tomamos en serio tu privacidad.\n\n'
+      '1. Colección de Datos: KeepIt es una aplicación local. Todos los datos que introduces (peso, edad, notas, etc.) se guardan ÚNICAMENTE en tu dispositivo. No enviamos tus datos a ningún servidor externo.\n\n'
+      '2. Permisos: Usamos notificaciones para recordarte registrar tu peso. Pedimos omitir la optimización de batería para que los avisos sean precisos.\n\n'
+      '3. Control: Tienes el control total. Puedes exportar tus datos a CSV o borrarlos permanentemente desde los ajustes.\n\n'
+      '4. Terceros: No compartimos ni vendemos tus datos a nadie.\n\n'
+      '5. Contacto: Para cualquier duda, contacta a través de la Google Play Store.'
+    : 'At KeepIt, we take your privacy seriously.\n\n'
+      '1. Data Collection: KeepIt is an offline-first app. All data you enter (weight, age, notes, etc.) is stored ONLY on your device. We do not transmit your data to any external servers.\n\n'
+      '2. Permissions: We use notifications to remind you to log your weight. We request battery optimization bypass for accurate timing.\n\n'
+      '3. Control: You have full control. You can export your data to CSV or delete it permanently from settings.\n\n'
+      '4. Third Parties: We do not share or sell your data to anyone.\n\n'
+      '5. Contact: For any questions, please contact through the Google Play Store.';
+
+  // This URL is still needed for the Google Play Console form
+  static const String privacyPolicyUrl = 'https://github.com/rauliesan/keepit/blob/main/PRIVACY_POLICY.md';
   
   static String get edit => _isEs ? 'Editar' : 'Edit';
   static String get editName => _isEs ? 'Editar nombre' : 'Edit name';

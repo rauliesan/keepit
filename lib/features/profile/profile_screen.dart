@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -536,6 +537,13 @@ class _DataSection extends ConsumerWidget {
           ),
           _Divider(isDark: isDark),
           _SettingsTile(
+            icon: Icons.policy_rounded,
+            label: AppStrings.privacyPolicy,
+            isDark: isDark,
+            onTap: () => _showPrivacyPolicy(context),
+          ),
+          _Divider(isDark: isDark),
+          _SettingsTile(
             icon: Icons.delete_forever_rounded,
             label: AppStrings.clearData,
             isDark: isDark,
@@ -545,6 +553,35 @@ class _DataSection extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showPrivacyPolicy(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppStrings.privacyPolicy),
+        content: SingleChildScrollView(
+          child: Text(AppStrings.privacyPolicyContent),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => _launchPrivacyPolicy(),
+            child: const Text('GitHub'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchPrivacyPolicy() async {
+    final url = Uri.parse(AppStrings.privacyPolicyUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
   }
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {
