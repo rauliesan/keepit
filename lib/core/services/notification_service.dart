@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 
 /// Singleton service for scheduling and managing local notifications.
@@ -28,10 +29,11 @@ class NotificationService {
 
     // Initialize timezone database
     tz_data.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation(_resolveTimeZone()));
+    final timezoneInfo = await FlutterTimezone.getLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
 
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@mipmap/ic_keepit',
     );
 
     const iosSettings = DarwinInitializationSettings(
@@ -58,10 +60,41 @@ class NotificationService {
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
       final status = await Permission.notification.request();
-      return status.isGranted;
+      debugPrint('[NotificationService] Notification permission: $status');
+      if (!status.isGranted) return false;
+
+      // On Android 12+, exact alarms need separate permission
+      final exactAlarm = await Permission.scheduleExactAlarm.request();
+      debugPrint('[NotificationService] Exact alarm permission: $exactAlarm');
+
+      return true;
     }
     // iOS permissions are handled via DarwinInitializationSettings
     return true;
+  }
+
+  /// Fire an immediate test notification to verify the system works.
+  Future<void> showTestNotification() async {
+    if (!_initialized) return;
+
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDesc,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const details = NotificationDetails(android: androidDetails);
+
+    await _plugin.show(
+      99,
+      'KeepIt Reminder 📊',
+      'Your daily reminder has been set! We\'ll remind you to log your weight 🔥',
+      details,
+    );
+    debugPrint('[NotificationService] Test notification fired');
   }
 
   /// Schedule a daily repeating notification at the given time.
@@ -105,7 +138,80 @@ class NotificationService {
       channelDescription: _channelDesc,
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/ic_keepit',
+      category: AndroidNotificationCategory.reminder,
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    debugPrint('[NotificationService] Now: $now, scheduling for: $scheduledDate');
+
+    try {
+      await _plugin.zonedSchedule(
+        _dailyReminderId,
+        'KeepIt Reminder 📊',
+        'Time to log your weight! Keep your streak going 🔥',
+        scheduledDate,
+        details,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+      debugPrint(
+          '[NotificationService] ✅ Scheduled at $hour:${minute.toString().padLeft(2, '0')} (next: $scheduledDate)');
+    } catch (e) {
+      debugPrint('[NotificationService] ❌ Failed to schedule: $e');
+    }
+  }
+
+  /// Cancel the daily reminder notification.
+  Future<void> cancelDailyReminder() async {
+    await _plugin.cancel(_dailyReminderId);
+    debugPrint('[NotificationService] Daily reminder cancelled');
+  }
+
+  /// Cancel today's reminder (user already logged) and reschedule for tomorrow.
+  ///
+  /// This is called when the user logs their weight — we cancel any pending
+  /// notification for today and schedule the next one for tomorrow at the
+  /// same time, so the reminder only fires on days without a log.
+  Future<void> cancelTodayAndRescheduleForTomorrow({
+    required int hour,
+    required int minute,
+  }) async {
+    if (!_initialized) return;
+
+    // Cancel existing
+    await _plugin.cancel(_dailyReminderId);
+
+    // Schedule for tomorrow at the same time
+    final now = tz.TZDateTime.now(tz.local);
+    final tomorrow = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    ).add(const Duration(days: 1));
+
+    const androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDesc,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_keepit',
       category: AndroidNotificationCategory.reminder,
     );
 
@@ -124,22 +230,16 @@ class NotificationService {
       _dailyReminderId,
       'KeepIt Reminder 📊',
       'Time to log your weight! Keep your streak going 🔥',
-      scheduledDate,
+      tomorrow,
       details,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
 
     debugPrint(
-        '[NotificationService] Daily reminder scheduled at $hour:$minute');
-  }
-
-  /// Cancel the daily reminder notification.
-  Future<void> cancelDailyReminder() async {
-    await _plugin.cancel(_dailyReminderId);
-    debugPrint('[NotificationService] Daily reminder cancelled');
+        '[NotificationService] Rescheduled reminder for tomorrow at $hour:${minute.toString().padLeft(2, '0')} (next fire: $tomorrow)');
   }
 
   /// Handle notification tap — opens the app.
@@ -147,43 +247,4 @@ class NotificationService {
     debugPrint('[NotificationService] Notification tapped: ${response.payload}');
   }
 
-  /// Resolve the system timezone to an IANA name.
-  /// Uses DateTime offset as a best-effort fallback.
-  String _resolveTimeZone() {
-    try {
-      final offset = DateTime.now().timeZoneOffset;
-      final hours = offset.inHours;
-      // Map common offsets to IANA zones
-      const mapping = {
-        -12: 'Pacific/Fiji',
-        -11: 'Pacific/Midway',
-        -10: 'Pacific/Honolulu',
-        -9: 'America/Anchorage',
-        -8: 'America/Los_Angeles',
-        -7: 'America/Denver',
-        -6: 'America/Chicago',
-        -5: 'America/New_York',
-        -4: 'America/Halifax',
-        -3: 'America/Sao_Paulo',
-        -2: 'Atlantic/South_Georgia',
-        -1: 'Atlantic/Azores',
-        0: 'Europe/London',
-        1: 'Europe/Madrid',
-        2: 'Europe/Helsinki',
-        3: 'Europe/Moscow',
-        4: 'Asia/Dubai',
-        5: 'Asia/Karachi',
-        6: 'Asia/Dhaka',
-        7: 'Asia/Bangkok',
-        8: 'Asia/Shanghai',
-        9: 'Asia/Tokyo',
-        10: 'Australia/Sydney',
-        11: 'Pacific/Noumea',
-        12: 'Pacific/Auckland',
-      };
-      return mapping[hours] ?? 'Europe/Madrid';
-    } catch (_) {
-      return 'Europe/Madrid';
-    }
-  }
 }

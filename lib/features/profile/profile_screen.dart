@@ -14,6 +14,7 @@ import '../../core/utils/csv_utils.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/models/user_profile.dart';
 import '../../providers/app_providers.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -33,11 +34,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: SafeArea(
         child: profile.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => Center(child: Text('${AppStrings.error}: $e')),
           data: (p) {
             if (p == null) return const SizedBox();
             return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+              padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 100),
               children: [
                 Text(
                   AppStrings.profile,
@@ -136,14 +137,14 @@ class _AvatarSection extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit name'),
+        title: Text(AppStrings.editName),
         content: TextField(
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.words,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.cancel)),
           TextButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
@@ -151,7 +152,7 @@ class _AvatarSection extends ConsumerWidget {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Save'),
+            child: Text(AppStrings.saveWeight),
           ),
         ],
       ),
@@ -197,7 +198,7 @@ class _MetricsSection extends ConsumerWidget {
             label: AppStrings.height,
             value: profile.heightCm != null
                 ? UnitConverter.formatHeight(profile.heightCm!, isMetric)
-                : 'Not set',
+                : AppStrings.notSet,
             isDark: isDark,
             onTap: () => _editHeight(context, ref),
           ),
@@ -205,7 +206,7 @@ class _MetricsSection extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.cake_rounded,
             label: AppStrings.age,
-            value: profile.age != null ? '${profile.age}' : 'Not set',
+            value: profile.age != null ? '${profile.age}' : AppStrings.notSet,
             isDark: isDark,
             onTap: () => _editAge(context, ref),
           ),
@@ -215,7 +216,7 @@ class _MetricsSection extends ConsumerWidget {
             label: AppStrings.goalWeight,
             value: profile.goalWeightKg != null
                 ? UnitConverter.formatWeight(profile.goalWeightKg!, isMetric)
-                : 'Not set',
+                : AppStrings.notSet,
             isDark: isDark,
             onTap: () => _editGoal(context, ref),
           ),
@@ -230,7 +231,7 @@ class _MetricsSection extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Height (cm)'),
+        title: Text(AppStrings.heightTitle),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -238,14 +239,14 @@ class _MetricsSection extends ConsumerWidget {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.cancel)),
           TextButton(
             onPressed: () {
               final value = double.tryParse(controller.text);
               ref.read(profileProvider.notifier).updateHeight(value);
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(AppStrings.saveWeight),
           ),
         ],
       ),
@@ -257,7 +258,7 @@ class _MetricsSection extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Age'),
+        title: Text(AppStrings.ageTitle),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
@@ -265,7 +266,7 @@ class _MetricsSection extends ConsumerWidget {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.cancel)),
           TextButton(
             onPressed: () {
               final value = int.tryParse(controller.text);
@@ -273,7 +274,7 @@ class _MetricsSection extends ConsumerWidget {
               ref.read(profileProvider.notifier).saveProfile(p);
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(AppStrings.saveWeight),
           ),
         ],
       ),
@@ -286,7 +287,7 @@ class _MetricsSection extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Goal weight (kg)'),
+        title: Text(AppStrings.goalWeightKg),
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -294,14 +295,14 @@ class _MetricsSection extends ConsumerWidget {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppStrings.cancel)),
           TextButton(
             onPressed: () {
               final value = double.tryParse(controller.text);
               ref.read(profileProvider.notifier).updateGoal(goalWeightKg: value);
               Navigator.pop(ctx);
             },
-            child: const Text('Save'),
+            child: Text(AppStrings.saveWeight),
           ),
         ],
       ),
@@ -342,6 +343,14 @@ class _PreferencesSection extends ConsumerWidget {
           ),
           _Divider(isDark: isDark),
           _SettingsTile(
+            icon: Icons.language_rounded,
+            label: 'Language / Idioma', // Keep this explicitly bilingual so they know it's for language
+            value: _languageLabel(profile.language),
+            isDark: isDark,
+            onTap: () => _cycleLanguage(ref),
+          ),
+          _Divider(isDark: isDark),
+          _SettingsTile(
             icon: Icons.palette_rounded,
             label: AppStrings.theme,
             value: _themeLabel(profile.themePreference),
@@ -375,16 +384,16 @@ class _PreferencesSection extends ConsumerWidget {
                 final action = await showDialog<String>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('Daily Reminder'),
-                    content: Text('Current: ${profile.reminderTime}'),
+                    title: Text(AppStrings.dailyReminder),
+                    content: Text('${AppStrings.current}: ${profile.reminderTime}'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, 'disable'),
-                        child: const Text('Disable'),
+                        child: Text(AppStrings.disable),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, 'change'),
-                        child: const Text('Change Time'),
+                        child: Text(AppStrings.changeTime),
                       ),
                     ],
                   ),
@@ -405,14 +414,53 @@ class _PreferencesSection extends ConsumerWidget {
                 final formatted =
                     '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
                 ref.read(profileProvider.notifier).updateReminderTime(formatted);
-                // Actually schedule the notification!
-                await NotificationService.instance.scheduleDailyReminder(
-                  hour: time.hour,
-                  minute: time.minute,
-                );
+
+                // If already logged today, schedule for tomorrow; otherwise today
+                final todayEntry = ref.read(todayEntryProvider);
+                if (todayEntry != null) {
+                  await NotificationService.instance.cancelTodayAndRescheduleForTomorrow(
+                    hour: time.hour,
+                    minute: time.minute,
+                  );
+                } else {
+                  await NotificationService.instance.scheduleDailyReminder(
+                    hour: time.hour,
+                    minute: time.minute,
+                  );
+                }
               }
             },
           ),
+          if (profile.reminderTime != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: GestureDetector(
+                onTap: () async {
+                  if (await Permission.ignoreBatteryOptimizations.isDenied) {
+                    await Permission.ignoreBatteryOptimizations.request();
+                  }
+                },
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 16,
+                      color: isDark ? AppColors.primaryLight : AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        AppStrings.batteryOptimizationHint,
+                        style: AppTypography.bodySmall(
+                          isDark ? AppColors.primaryLight : AppColors.primary,
+                        ).copyWith(height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -435,6 +483,25 @@ class _PreferencesSection extends ConsumerWidget {
       case ThemePreference.dark: next = ThemePreference.system; break;
     }
     ref.read(profileProvider.notifier).updateTheme(next);
+  }
+
+  String _languageLabel(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.en: return 'English';
+      case AppLanguage.es: return 'Español';
+      case AppLanguage.system: return AppStrings.system;
+    }
+  }
+
+  void _cycleLanguage(WidgetRef ref) {
+    final current = profile.language;
+    AppLanguage next;
+    switch (current) {
+      case AppLanguage.system: next = AppLanguage.en; break;
+      case AppLanguage.en: next = AppLanguage.es; break;
+      case AppLanguage.es: next = AppLanguage.system; break;
+    }
+    ref.read(profileProvider.notifier).updateLanguage(next);
   }
 }
 
@@ -487,7 +554,7 @@ class _DataSection extends ConsumerWidget {
       if (list.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No data to export')),
+            SnackBar(content: Text(AppStrings.noDataToExport)),
           );
         }
         return;
@@ -505,7 +572,7 @@ class _DataSection extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e')),
+          SnackBar(content: Text(AppStrings.exportFailed(e))),
         );
       }
     }
@@ -526,7 +593,7 @@ class _DataSection extends ConsumerWidget {
       if (entries.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No valid entries found in CSV')),
+            SnackBar(content: Text(AppStrings.noValidEntriesFound)),
           );
         }
         return;
@@ -536,13 +603,13 @@ class _DataSection extends ConsumerWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Imported $count new entries')),
+          SnackBar(content: Text(AppStrings.importedEntries(count))),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Import failed: $e')),
+          SnackBar(content: Text(AppStrings.importFailed(e))),
         );
       }
     }
@@ -552,14 +619,14 @@ class _DataSection extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear all data?'),
-        content: const Text(AppStrings.clearDataConfirm),
+        title: Text(AppStrings.clearData),
+        content: Text(AppStrings.clearDataConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppStrings.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.alert),
-            child: const Text('Delete Everything'),
+            child: Text(AppStrings.deleteEverything),
           ),
         ],
       ),
@@ -572,23 +639,23 @@ class _DataSection extends ConsumerWidget {
       final doubleConfirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Are you absolutely sure?'),
+          title: Text(AppStrings.absolutelySure),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(AppStrings.clearDataDouble),
+              Text(AppStrings.clearDataDouble),
               const SizedBox(height: 12),
               TextField(controller: controller, autofocus: true),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppStrings.cancel)),
             TextButton(
               onPressed: () {
                 if (controller.text == 'DELETE') Navigator.pop(ctx, true);
               },
               style: TextButton.styleFrom(foregroundColor: AppColors.alert),
-              child: const Text('Delete'),
+              child: Text(AppStrings.delete),
             ),
           ],
         ),

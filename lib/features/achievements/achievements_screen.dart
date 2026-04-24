@@ -55,13 +55,13 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$unlockedCount of ${achievements.length} unlocked',
+                  AppStrings.unlockedOf(unlockedCount, achievements.length),
                   style: AppTypography.bodyMedium(subtextColor),
                 ),
                 const SizedBox(height: 20),
                 Expanded(
                   child: GridView.builder(
-                    padding: const EdgeInsets.only(bottom: 100),
+                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 100),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       mainAxisSpacing: 14,

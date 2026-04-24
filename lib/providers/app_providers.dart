@@ -7,6 +7,7 @@ import '../data/repositories/weight_repository.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/streak_repository.dart';
 import '../core/utils/streak_calculator.dart';
+import '../core/constants/app_strings.dart';
 
 // ─── Repositories ────────────────────────────────────
 final weightRepositoryProvider = Provider((ref) => WeightRepository());
@@ -71,6 +72,11 @@ class ProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
 
   Future<void> updateFirstDayOfWeek(FirstDayOfWeek day) async {
     await _repo.updateFirstDayOfWeek(day);
+    await _load();
+  }
+
+  Future<void> updateLanguage(AppLanguage language) async {
+    await _repo.updateLanguage(language);
     await _load();
   }
 
@@ -253,6 +259,11 @@ final achievementsProvider = Provider<List<AchievementStatus>>((ref) {
   final streakData = streak.whenOrNull(data: (d) => d) ?? StreakData.create();
   final profileData = profile.whenOrNull(data: (d) => d);
 
+  // Ensure AppStrings knows about the current language before calculating names/descriptions
+  if (profileData != null) {
+    AppStrings.currentLanguage = profileData.language;
+  }
+
   return _calculateAchievements(entryList, streakData, profileData);
 });
 
@@ -266,8 +277,8 @@ List<AchievementStatus> _calculateAchievements(
   // First Step — log your first weight
   achievements.add(AchievementStatus(
     id: 'first_step',
-    name: 'First Step',
-    description: 'Log your first weight',
+    name: AppStrings.achFirstStepName,
+    description: AppStrings.achFirstStepDesc,
     icon: '👣',
     isUnlocked: entries.isNotEmpty,
   ));
@@ -275,8 +286,8 @@ List<AchievementStatus> _calculateAchievements(
   // Week Warrior — 7-day streak
   achievements.add(AchievementStatus(
     id: 'week_warrior',
-    name: 'Week Warrior',
-    description: '7-day streak',
+    name: AppStrings.achWeekWarriorName,
+    description: AppStrings.achWeekWarriorDesc,
     icon: '⚔️',
     isUnlocked: streak.longestStreak >= 7,
   ));
@@ -284,8 +295,8 @@ List<AchievementStatus> _calculateAchievements(
   // Month Master — 30-day streak
   achievements.add(AchievementStatus(
     id: 'month_master',
-    name: 'Month Master',
-    description: '30-day streak',
+    name: AppStrings.achMonthMasterName,
+    description: AppStrings.achMonthMasterDesc,
     icon: '👑',
     isUnlocked: streak.longestStreak >= 30,
   ));
@@ -300,16 +311,16 @@ List<AchievementStatus> _calculateAchievements(
         : current - first;
     achievements.add(AchievementStatus(
       id: 'first_kilo',
-      name: 'First Kilo',
-      description: 'Lose your first kg toward your goal',
+      name: AppStrings.achFirstKiloName,
+      description: AppStrings.achFirstKiloDesc,
       icon: '🎯',
       isUnlocked: lostTowardGoal >= 1.0,
     ));
   } else {
     achievements.add(AchievementStatus(
       id: 'first_kilo',
-      name: 'First Kilo',
-      description: 'Lose your first kg toward your goal',
+      name: AppStrings.achFirstKiloName,
+      description: AppStrings.achFirstKiloDesc,
       icon: '🎯',
       isUnlocked: false,
     ));
@@ -323,16 +334,16 @@ List<AchievementStatus> _calculateAchievements(
     final lost = (first - current).abs();
     achievements.add(AchievementStatus(
       id: 'halfway',
-      name: 'Halfway There',
-      description: '50% of your goal reached',
+      name: AppStrings.achHalfwayName,
+      description: AppStrings.achHalfwayDesc,
       icon: '🌟',
       isUnlocked: totalToLose > 0 && lost >= totalToLose * 0.5,
     ));
   } else {
     achievements.add(AchievementStatus(
       id: 'halfway',
-      name: 'Halfway There',
-      description: '50% of your goal reached',
+      name: AppStrings.achHalfwayName,
+      description: AppStrings.achHalfwayDesc,
       icon: '🌟',
       isUnlocked: false,
     ));
@@ -347,16 +358,16 @@ List<AchievementStatus> _calculateAchievements(
         : current >= goalWeight;
     achievements.add(AchievementStatus(
       id: 'goal_crusher',
-      name: 'Goal Crusher',
-      description: 'Goal weight reached!',
+      name: AppStrings.achGoalCrusherName,
+      description: AppStrings.achGoalCrusherDesc,
       icon: '🏆',
       isUnlocked: isReached,
     ));
   } else {
     achievements.add(AchievementStatus(
       id: 'goal_crusher',
-      name: 'Goal Crusher',
-      description: 'Goal weight reached!',
+      name: AppStrings.achGoalCrusherName,
+      description: AppStrings.achGoalCrusherDesc,
       icon: '🏆',
       isUnlocked: false,
     ));
@@ -365,8 +376,8 @@ List<AchievementStatus> _calculateAchievements(
   // Data Nerd — 100 entries
   achievements.add(AchievementStatus(
     id: 'data_nerd',
-    name: 'Data Nerd',
-    description: '100 entries logged',
+    name: AppStrings.achDataNerdName,
+    description: AppStrings.achDataNerdDesc,
     icon: '📊',
     isUnlocked: streak.totalLogged >= 100,
   ));
@@ -374,8 +385,8 @@ List<AchievementStatus> _calculateAchievements(
   // Comeback Kid — restart a broken streak
   achievements.add(AchievementStatus(
     id: 'comeback_kid',
-    name: 'Comeback Kid',
-    description: 'Restart a broken streak',
+    name: AppStrings.achComebackName,
+    description: AppStrings.achComebackDesc,
     icon: '💪',
     isUnlocked: streak.currentStreak >= 1 && streak.longestStreak > streak.currentStreak,
   ));

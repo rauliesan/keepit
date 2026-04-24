@@ -104,6 +104,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         hour: _reminderTime!.hour,
         minute: _reminderTime!.minute,
       );
+      // Fire an immediate test notification to confirm it works
+      await NotificationService.instance.showTestNotification();
     }
 
     widget.onComplete();
@@ -184,7 +186,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
             // Next button
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+              padding: EdgeInsets.fromLTRB(24, 8, 24, MediaQuery.of(context).viewPadding.bottom + 16),
               child: SizedBox(
                 width: double.infinity,
                 height: 56,

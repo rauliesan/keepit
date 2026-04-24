@@ -32,14 +32,14 @@ class ProgressScreen extends ConsumerWidget {
       body: SafeArea(
         child: entries.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => Center(child: Text('${AppStrings.error}: $e')),
           data: (entryList) {
             if (entryList.isEmpty) {
               return _EmptyChart(textColor: textColor, subtextColor: subtextColor);
             }
 
             return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+              padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 100),
               children: [
                 Text(
                   AppStrings.progress,

@@ -84,6 +84,15 @@ class ProfileRepository {
     }
   }
 
+  /// Update app language.
+  Future<void> updateLanguage(AppLanguage language) async {
+    final profile = await getProfile();
+    if (profile != null) {
+      profile.language = language;
+      await saveProfile(profile);
+    }
+  }
+
   /// Mark onboarding as completed.
   Future<void> completeOnboarding() async {
     final profile = await getProfile();

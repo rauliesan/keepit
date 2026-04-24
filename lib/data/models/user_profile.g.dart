@@ -48,29 +48,35 @@ const UserProfileSchema = CollectionSchema(
       name: r'heightCm',
       type: IsarType.double,
     ),
-    r'name': PropertySchema(
+    r'language': PropertySchema(
       id: 6,
+      name: r'language',
+      type: IsarType.string,
+      enumMap: _UserProfilelanguageEnumValueMap,
+    ),
+    r'name': PropertySchema(
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'onboardingCompleted': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'onboardingCompleted',
       type: IsarType.bool,
     ),
     r'reminderTime': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'reminderTime',
       type: IsarType.string,
     ),
     r'themePreference': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'themePreference',
       type: IsarType.string,
       enumMap: _UserProfilethemePreferenceEnumValueMap,
     ),
     r'unitSystem': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'unitSystem',
       type: IsarType.string,
       enumMap: _UserProfileunitSystemEnumValueMap,
@@ -103,6 +109,7 @@ int _userProfileEstimateSize(
     }
   }
   bytesCount += 3 + object.firstDayOfWeek.name.length * 3;
+  bytesCount += 3 + object.language.name.length * 3;
   bytesCount += 3 + object.name.length * 3;
   {
     final value = object.reminderTime;
@@ -127,11 +134,12 @@ void _userProfileSerialize(
   writer.writeDateTime(offsets[3], object.goalDate);
   writer.writeDouble(offsets[4], object.goalWeightKg);
   writer.writeDouble(offsets[5], object.heightCm);
-  writer.writeString(offsets[6], object.name);
-  writer.writeBool(offsets[7], object.onboardingCompleted);
-  writer.writeString(offsets[8], object.reminderTime);
-  writer.writeString(offsets[9], object.themePreference.name);
-  writer.writeString(offsets[10], object.unitSystem.name);
+  writer.writeString(offsets[6], object.language.name);
+  writer.writeString(offsets[7], object.name);
+  writer.writeBool(offsets[8], object.onboardingCompleted);
+  writer.writeString(offsets[9], object.reminderTime);
+  writer.writeString(offsets[10], object.themePreference.name);
+  writer.writeString(offsets[11], object.unitSystem.name);
 }
 
 UserProfile _userProfileDeserialize(
@@ -150,14 +158,17 @@ UserProfile _userProfileDeserialize(
   object.goalWeightKg = reader.readDoubleOrNull(offsets[4]);
   object.heightCm = reader.readDoubleOrNull(offsets[5]);
   object.id = id;
-  object.name = reader.readString(offsets[6]);
-  object.onboardingCompleted = reader.readBool(offsets[7]);
-  object.reminderTime = reader.readStringOrNull(offsets[8]);
+  object.language =
+      _UserProfilelanguageValueEnumMap[reader.readStringOrNull(offsets[6])] ??
+          AppLanguage.system;
+  object.name = reader.readString(offsets[7]);
+  object.onboardingCompleted = reader.readBool(offsets[8]);
+  object.reminderTime = reader.readStringOrNull(offsets[9]);
   object.themePreference = _UserProfilethemePreferenceValueEnumMap[
-          reader.readStringOrNull(offsets[9])] ??
+          reader.readStringOrNull(offsets[10])] ??
       ThemePreference.light;
   object.unitSystem = _UserProfileunitSystemValueEnumMap[
-          reader.readStringOrNull(offsets[10])] ??
+          reader.readStringOrNull(offsets[11])] ??
       UnitSystem.metric;
   return object;
 }
@@ -184,16 +195,20 @@ P _userProfileDeserializeProp<P>(
     case 5:
       return (reader.readDoubleOrNull(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (_UserProfilelanguageValueEnumMap[
+              reader.readStringOrNull(offset)] ??
+          AppLanguage.system) as P;
     case 7:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (_UserProfilethemePreferenceValueEnumMap[
               reader.readStringOrNull(offset)] ??
           ThemePreference.light) as P;
-    case 10:
+    case 11:
       return (_UserProfileunitSystemValueEnumMap[
               reader.readStringOrNull(offset)] ??
           UnitSystem.metric) as P;
@@ -209,6 +224,16 @@ const _UserProfilefirstDayOfWeekEnumValueMap = {
 const _UserProfilefirstDayOfWeekValueEnumMap = {
   r'monday': FirstDayOfWeek.monday,
   r'sunday': FirstDayOfWeek.sunday,
+};
+const _UserProfilelanguageEnumValueMap = {
+  r'system': r'system',
+  r'en': r'en',
+  r'es': r'es',
+};
+const _UserProfilelanguageValueEnumMap = {
+  r'system': AppLanguage.system,
+  r'en': AppLanguage.en,
+  r'es': AppLanguage.es,
 };
 const _UserProfilethemePreferenceEnumValueMap = {
   r'light': r'light',
@@ -973,6 +998,141 @@ extension UserProfileQueryFilter
     });
   }
 
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition> languageEqualTo(
+    AppLanguage value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageGreaterThan(
+    AppLanguage value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageLessThan(
+    AppLanguage value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition> languageBetween(
+    AppLanguage lower,
+    AppLanguage upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'language',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition> languageMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'language',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'language',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition>
+      languageIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'language',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<UserProfile, UserProfile, QAfterFilterCondition> nameEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1624,6 +1784,18 @@ extension UserProfileQuerySortBy
     });
   }
 
+  QueryBuilder<UserProfile, UserProfile, QAfterSortBy> sortByLanguage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterSortBy> sortByLanguageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProfile, UserProfile, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1778,6 +1950,18 @@ extension UserProfileQuerySortThenBy
     });
   }
 
+  QueryBuilder<UserProfile, UserProfile, QAfterSortBy> thenByLanguage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfile, UserProfile, QAfterSortBy> thenByLanguageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProfile, UserProfile, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1885,6 +2069,13 @@ extension UserProfileQueryWhereDistinct
     });
   }
 
+  QueryBuilder<UserProfile, UserProfile, QDistinct> distinctByLanguage(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'language', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<UserProfile, UserProfile, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1964,6 +2155,12 @@ extension UserProfileQueryProperty
   QueryBuilder<UserProfile, double?, QQueryOperations> heightCmProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'heightCm');
+    });
+  }
+
+  QueryBuilder<UserProfile, AppLanguage, QQueryOperations> languageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'language');
     });
   }
 

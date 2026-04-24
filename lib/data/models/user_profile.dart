@@ -41,6 +41,10 @@ class UserProfile {
   /// Whether onboarding has been completed.
   late bool onboardingCompleted;
 
+  /// Language preference: system, en, es.
+  @Enumerated(EnumType.name)
+  late AppLanguage language;
+
   UserProfile();
 
   UserProfile.create({
@@ -55,6 +59,7 @@ class UserProfile {
     this.themePreference = ThemePreference.system,
     this.firstDayOfWeek = FirstDayOfWeek.monday,
     this.onboardingCompleted = false,
+    this.language = AppLanguage.system,
   });
 }
 
@@ -72,4 +77,10 @@ enum ThemePreference {
 enum FirstDayOfWeek {
   monday,
   sunday,
+}
+
+enum AppLanguage {
+  system,
+  en,
+  es,
 }

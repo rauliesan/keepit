@@ -8,6 +8,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_animations.dart';
 import '../../core/utils/unit_converter.dart';
+import '../../core/services/notification_service.dart';
 import '../../providers/app_providers.dart';
 import '../../shared/widgets/animated_number.dart';
 
@@ -91,7 +92,7 @@ class _LogWeightSheetState extends ConsumerState<LogWeightSheet>
         final textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
         return AlertDialog(
-          title: Text('Enter weight ($unit)'),
+          title: Text('${AppStrings.enterWeight} ($unit)'),
           content: TextField(
             controller: controller,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -116,7 +117,7 @@ class _LogWeightSheetState extends ConsumerState<LogWeightSheet>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(AppStrings.cancel),
             ),
             TextButton(
               onPressed: () {
@@ -126,7 +127,7 @@ class _LogWeightSheetState extends ConsumerState<LogWeightSheet>
                   Navigator.pop(ctx);
                 }
               },
-              child: const Text('OK'),
+              child: Text(AppStrings.ok),
             ),
           ],
         );
@@ -151,6 +152,22 @@ class _LogWeightSheetState extends ConsumerState<LogWeightSheet>
     );
 
     final result = await ref.read(streakProvider.notifier).recordLog(DateTime.now());
+
+    // Cancel today's reminder since the user already logged
+    final profile = ref.read(profileProvider).valueOrNull;
+    if (profile?.reminderTime != null) {
+      final parts = profile!.reminderTime!.split(':');
+      if (parts.length == 2) {
+        final hour = int.tryParse(parts[0]);
+        final minute = int.tryParse(parts[1]);
+        if (hour != null && minute != null) {
+          await NotificationService.instance.cancelTodayAndRescheduleForTomorrow(
+            hour: hour,
+            minute: minute,
+          );
+        }
+      }
+    }
 
     setState(() => _showSuccess = true);
     _successController.forward();
@@ -227,7 +244,8 @@ class _LogWeightSheetState extends ConsumerState<LogWeightSheet>
         left: 24,
         right: 24,
         top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom + 24,
       ),
       child: SingleChildScrollView(
         child: Column(

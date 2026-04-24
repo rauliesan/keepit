@@ -19,10 +19,22 @@ class KeepItApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final profileState = ref.watch(profileProvider);
+    
+    // Update active language from profile, defaulting to system
+    final language = profileState.valueOrNull?.language ?? AppLanguage.system;
+    AppStrings.currentLanguage = language;
+
+    // Optional: explicitly set the locale to force Flutter's internal localization 
+    // components to match the user's chosen language.
+    Locale? appLocale;
+    if (language == AppLanguage.en) appLocale = const Locale('en');
+    if (language == AppLanguage.es) appLocale = const Locale('es');
 
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
+      locale: appLocale,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
@@ -109,9 +121,9 @@ class _AppGateState extends ConsumerState<_AppGate> {
                 child: const Icon(Icons.monitor_weight_rounded, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 AppStrings.appName,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ],
           ),

@@ -89,17 +89,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         body: SafeArea(
           child: profile.when(
             loading: () => const _LoadingSkeleton(),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => Center(child: Text('${AppStrings.error}: $e')),
             data: (profileData) {
               if (profileData == null) return const SizedBox();
 
               return entries.when(
                 loading: () => const _LoadingSkeleton(),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) => Center(child: Text('${AppStrings.error}: $e')),
                 data: (entryList) {
                   return streak.when(
                     loading: () => const _LoadingSkeleton(),
-                    error: (e, _) => Center(child: Text('Error: $e')),
+                    error: (e, _) => Center(child: Text('${AppStrings.error}: $e')),
                     data: (streakData) {
                       return _HomeContent(
                         profile: profileData,
@@ -123,8 +123,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: FloatingActionButton.extended(
             onPressed: _showLogSheet,
             heroTag: 'log_weight_fab',
+            extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
             icon: Icon(todayEntry != null ? Icons.edit_rounded : Icons.add_rounded),
-            label: Text(todayEntry != null ? 'Edit' : 'Log Weight'),
+            label: Text(todayEntry != null ? AppStrings.edit : AppStrings.logWeight),
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             elevation: 0,
@@ -162,7 +163,7 @@ class _HomeContent extends StatelessWidget {
     final subtextColor = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 100),
       children: [
         // Greeting
         _buildGreeting(textColor, subtextColor),

@@ -32,9 +32,9 @@ class AppDateUtils {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
-  /// Returns the day name initial (M, T, W, etc.)
+  /// Returns the day name abbreviation (Mo, Tu, We, etc.)
   static String dayInitial(DateTime date) {
-    return DateFormat('E').format(date)[0];
+    return DateFormat('E').format(date).substring(0, 2);
   }
 
   /// Normalizes a DateTime to midnight.
